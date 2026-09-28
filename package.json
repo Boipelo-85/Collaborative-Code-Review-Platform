@@ -1,0 +1,29 @@
+{
+  "name": "collaborative-code-review-platform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Boipelo-85/Collaborative-Code-Review-Platform.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Boipelo-85/Collaborative-Code-Review-Platform/issues"
+  },
+  "homepage": "https://github.com/Boipelo-85/Collaborative-Code-Review-Platform#readme",
+  "dependencies": {
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
