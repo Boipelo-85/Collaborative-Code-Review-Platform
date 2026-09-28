@@ -22,6 +22,7 @@
   "homepage": "https://github.com/Boipelo-85/Collaborative-Code-Review-Platform#readme",
   "dependencies": {
     "@types/node": "^26.6.3",
+    "bcrypt": "^6.0.0",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "pg": "^8.23.0",
@@ -29,6 +30,7 @@
     "typescript": "^7.0.2"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/pg": "^8.23.1",
     "nodemon": "^3.1.14"
