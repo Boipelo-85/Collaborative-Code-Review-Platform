@@ -6,10 +6,11 @@ const parseId = (value: unknown): number | null => {
     return Number.isInteger(id) && id > 0 ? id : null;
 };
 
+// Create a project
 export const createProject = async (req: Request, res: Response) => {
     try {
         const projectId = parseId(req.body.project_id);
-        const userId = parseId(req.body.user_id);
+        const userId = parseId(req.body.user_id);//Initialize the project ID section
 
         if (projectId === null || userId === null) {
             return res.status(400).json({
@@ -24,13 +25,12 @@ export const createProject = async (req: Request, res: Response) => {
 
         return res.status(201).json(result.rows[0]);
     } catch (error) {
-        console.error('Failed to create project assignment:', error);
-        return res.status(500).json({
-            message: "Failed to create project",
-        });
+        console.error('Failed to create project:', error);
+        return res.status(500).json({ message: 'Failed to create project' });
     }
 };
 
+// Get all projects
 export const getProjects = async (req: Request, res: Response) => {
     try {
         const result = await query(
@@ -40,12 +40,11 @@ export const getProjects = async (req: Request, res: Response) => {
         return res.status(200).json(result.rows);
     } catch (error) {
         console.error('Failed to retrieve projects:', error);
-        return res.status(500).json({
-            message: "Failed to retrieve projects",
-        });
+        return res.status(500).json({ message: 'Failed to retrieve projects' });
     }
 };
 
+// Get project by ID
 export const getProjectById = async (req: Request, res: Response) => {
     try {
         const projectId = parseId(req.params.projectId);
@@ -66,33 +65,24 @@ export const getProjectById = async (req: Request, res: Response) => {
         return res.status(200).json(result.rows);
     } catch (error) {
         console.error('Failed to retrieve project:', error);
-        return res.status(500).json({
-            message: 'Failed to retrieve project'
-        });
+        return res.status(500).json({ message: 'Failed to retrieve project' });
     }
 };
 
+// Update project
 export const updateProject = async (req: Request, res: Response) => {
     try {
         const projectId = parseId(req.params.projectId);
-        const userId = parseId(req.params.userId);
-        const updatedProjectId = req.body.project_id === undefined
-            ? null
-            : parseId(req.body.project_id);
-        const updatedUserId = req.body.user_id === undefined
-            ? null
-            : parseId(req.body.user_id);
+        const userId = parseId(req.params.userId); //Initialize the project ID section
+        const updatedProjectId = req.body.project_id === undefined ? null : parseId(req.body.project_id);
+        const updatedUserId = req.body.user_id === undefined ? null : parseId(req.body.user_id);
 
         if (projectId === null || userId === null) {
-            return res.status(400).json({
-                message: 'projectId and userId must be positive integers'
-            });
+            return res.status(400).json({ message: 'projectId and userId must be positive integers' });
         }
 
         if (updatedProjectId === null && updatedUserId === null) {
-            return res.status(400).json({
-                message: 'Provide a valid project_id or user_id to update'
-            });
+            return res.status(400).json({ message: 'Provide a valid project_id or user_id to update' });
         }
 
         const result = await query(
@@ -105,27 +95,24 @@ export const updateProject = async (req: Request, res: Response) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Project assignment not found' });
+            return res.status(404).json({ message: 'Project not found' });
         }
 
         return res.status(200).json(result.rows[0]);
     } catch (error) {
-        console.error('Failed to update project assignment:', error);
-        return res.status(500).json({
-            message: 'Failed to update project assignment'
-        });
+        console.error('Failed to update project:', error);
+        return res.status(500).json({ message: 'Failed to update project' });
     }
 };
 
+// Delete project from the database
 export const deleteProject = async (req: Request, res: Response) => {
     try {
-        const projectId = parseId(req.params.projectId);
-        const userId = parseId(req.params.userId);
+        const projectId = parseId(req.params.projectId); //Initialize the project ID section
+        const userId = parseId(req.params.userId);//Initialize the user ID section
 
         if (projectId === null || userId === null) {
-            return res.status(400).json({
-                message: 'projectId and userId must be positive integers'
-            });
+            return res.status(400).json({ message: 'projectId and userId must be positive integers' });
         }
 
         const result = await query(
@@ -134,14 +121,12 @@ export const deleteProject = async (req: Request, res: Response) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Project assignment not found' });
+            return res.status(404).json({ message: 'Project not found' });
         }
 
         return res.status(200).json(result.rows[0]);
     } catch (error) {
-        console.error('Failed to delete project assignment:', error);
-        return res.status(500).json({
-            message: 'Failed to delete project assignment'
-        });
+        console.error('Failed to delete project:', error);
+        return res.status(500).json({ message: 'Failed to delete project' });
     }
 };

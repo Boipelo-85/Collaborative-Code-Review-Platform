@@ -6,7 +6,7 @@ CREATE TABLE Users (
     email VARCHAR(255) UNIQUE NOT NULL,
     display_picture TEXT,
 	cellphone INT, 
-	password VARCHAR(30),
+    password VARCHAR(255),
 	role VARCHAR(20) NOT NULL DEFAULT 'Submitter'
 );
 
