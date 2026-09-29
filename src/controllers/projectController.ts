@@ -10,12 +10,40 @@ const parseId = (value: unknown): number | null => {
 export const createProject = async (req: Request, res: Response) => {
     try {
         const projectId = parseId(req.body.project_id);
-        const userId = parseId(req.body.user_id);//Initialize the project ID section
+        const userId = req.body.user_id === undefined
+            ? req.user?.id ?? null
+            : parseId(req.body.user_id);
 
         if (projectId === null || userId === null) {
             return res.status(400).json({
                 message: 'project_id and user_id must be positive integers'
             });
+        }
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication is required' });
+        }
+
+        if (userId !== req.user.id && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Only admins can assign another user to a project' });
+        }
+
+        const userResult = await query(
+            'SELECT id FROM Users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const existingMembership = await query(
+            'SELECT project_id FROM Projects WHERE project_id = $1 AND user_id = $2',
+            [projectId, userId]
+        );
+
+        if (existingMembership.rows.length > 0) {
+            return res.status(409).json({ message: 'User is already a member of this project' });
         }
 
         const result = await query(
@@ -69,6 +97,61 @@ export const getProjectById = async (req: Request, res: Response) => {
     }
 };
 
+// Add the authenticated user, or let an admin assign another user, to a project
+export const addProjectMember = async (req: Request, res: Response) => {
+    const projectId = parseId(req.params.id);
+
+    if (projectId === null) {
+        return res.status(400).json({ message: 'id must be a positive integer' });
+    }
+
+    if (!req.user) {
+        return res.status(401).json({ message: 'Authentication is required' });
+    }
+
+    const requestedUserId = req.body?.user_id === undefined
+        ? req.user.id
+        : parseId(req.body.user_id);
+
+    if (requestedUserId === null) {
+        return res.status(400).json({ message: 'user_id must be a positive integer' });
+    }
+
+    if (requestedUserId !== req.user.id && req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Only admins can assign another user to a project' });
+    }
+
+    try {
+        const userResult = await query(
+            'SELECT id FROM Users WHERE id = $1',
+            [requestedUserId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const existingMembership = await query(
+            'SELECT project_id FROM Projects WHERE project_id = $1 AND user_id = $2',
+            [projectId, requestedUserId]
+        );
+
+        if (existingMembership.rows.length > 0) {
+            return res.status(409).json({ message: 'User is already a member of this project' });
+        }
+
+        const result = await query(
+            'INSERT INTO Projects (project_id, user_id) VALUES ($1, $2) RETURNING project_id, user_id',
+            [projectId, requestedUserId]
+        );
+
+        return res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Failed to add project member:', error);
+        return res.status(500).json({ message: 'Failed to add project member' });
+    }
+};
+
 // Update project
 export const updateProject = async (req: Request, res: Response) => {
     try {
@@ -108,11 +191,19 @@ export const updateProject = async (req: Request, res: Response) => {
 // Delete project from the database
 export const deleteProject = async (req: Request, res: Response) => {
     try {
-        const projectId = parseId(req.params.projectId); //Initialize the project ID section
-        const userId = parseId(req.params.userId);//Initialize the user ID section
+        const projectId = parseId(req.params.id ?? req.params.projectId);
+        const userId = parseId(req.params.userId);
 
         if (projectId === null || userId === null) {
             return res.status(400).json({ message: 'projectId and userId must be positive integers' });
+        }
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication is required' });
+        }
+
+        if (userId !== req.user.id && req.user.role !== 'Admin') {
+            return res.status(403).json({ message: 'Only admins can remove another user from a project' });
         }
 
         const result = await query(
@@ -121,7 +212,7 @@ export const deleteProject = async (req: Request, res: Response) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Project not found' });
+            return res.status(404).json({ message: 'Project membership not found' });
         }
 
         return res.status(200).json(result.rows[0]);

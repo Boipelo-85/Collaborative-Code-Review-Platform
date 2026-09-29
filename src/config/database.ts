@@ -37,11 +37,25 @@ export const testDbConnection = async () => {
                             email VARCHAR(255) UNIQUE NOT NULL,
                             display_picture TEXT,
                             cellphone INT,
-                            password VARCHAR(255)
+                            password VARCHAR(255),
+                            role VARCHAR(20) NOT NULL DEFAULT 'Submitter'
                         );
                     `);
                     console.log("Users table created successfully");
                 } else {
+                    const roleColumnCheck = await client.query(`
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'role';
+                    `);
+
+                    if (roleColumnCheck.rows.length === 0) {
+                        await client.query(`
+                            ALTER TABLE Users
+                            ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'Submitter';
+                        `);
+                    }
+
                     // Check if password column needs to be updated
                     const columnCheck = await client.query(`
                         SELECT character_maximum_length
