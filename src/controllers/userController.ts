@@ -138,6 +138,7 @@ const canManageProfile = (req: Request, userId: number): boolean =>
 const isUniqueConstraintError = (error: unknown): boolean =>
     typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
 
+// Fetches user by ID, requires authentication, checks if requester is the user or an admin. Returns profile fields.
 export const getUserProfile = async (req: Request, res: Response) => {
     const userId = parseUserId(req.params.id);
 
@@ -170,7 +171,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to retrieve user profile' });
     }
 };
-
+//Validates fields individually (name, email, display_picture, cellphone). Builds dynamic SQL update. Handles uniqueness errors. Requires auth and authorization.
 export const updateUserProfile = async (req: Request, res: Response) => {
     const userId = parseUserId(req.params.id);
 
@@ -257,7 +258,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to update user profile' });
     }
 };
-
+//Remove the user profile from the database
 export const deleteUserProfile = async (req: Request, res: Response) => {
     const userId = parseUserId(req.params.id);
 
