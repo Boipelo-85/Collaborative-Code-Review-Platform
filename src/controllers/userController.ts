@@ -222,7 +222,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         addField('display_picture', typeof body.display_picture === 'string' ? body.display_picture.trim() : null);
     }
 
-    if ('cellphone' in body) {
+    if ('cellphone' in body){
         if (body.cellphone !== null && (typeof body.cellphone !== 'number' || !Number.isInteger(body.cellphone))) {
             return res.status(400).json({ message: 'cellphone must be an integer or null' });
         }

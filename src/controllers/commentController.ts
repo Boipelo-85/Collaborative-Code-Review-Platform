@@ -1,11 +1,13 @@
 import type { Request, Response } from 'express';
 import { query } from '../config/database.js';
 
+// Ensures IDs are positive integers
 const parseId = (value: unknown): number | null => {
     const id = Number(value);
     return Number.isInteger(id) && id > 0 ? id : null;
 };
 
+//Creating the comment to the submission section
 export const addCommentToSubmission = async (req: Request, res: Response) => {
     try {
         if (!req.user) {
@@ -44,6 +46,7 @@ export const addCommentToSubmission = async (req: Request, res: Response) => {
     }
 };
 
+//Updating the comment form where you did push the project
 export const updateComment = async (req: Request, res: Response) => {
     try {
         const commentId = parseId(req.params.id);
@@ -76,7 +79,7 @@ export const updateComment = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to update comment' });
     }
 };
-
+//Remove the comment section
 export const deleteComment = async (req: Request, res: Response) => {
     try {
         const commentId = parseId(req.params.id);
