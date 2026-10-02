@@ -1,0 +1,10 @@
+name: Local
+values:
+  - key: base_url
+    value: 'http://localhost:5000'
+  - key: email
+    value: ''
+  - key: password
+    value: ''
+  - key: access_token
+    value: ''

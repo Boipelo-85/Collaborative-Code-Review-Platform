@@ -12,13 +12,11 @@ declare global {
 }
 
 // Authentication middleware
-// For local testing/Postman, requests without an Authorization header are allowed to pass through.
-// If a token is supplied, it is still validated normally.
 export const authenticateUser: RequestHandler = (req, res, next) => {
     const authorization = req.get('authorization');
 
     if (!authorization) {
-        return next();
+        return res.status(401).json({ message: 'Authentication is required' });
     }
 
     const match = authorization.match(/^Bearer\s+(\S+)$/i);
