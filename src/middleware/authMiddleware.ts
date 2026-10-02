@@ -12,17 +12,21 @@ declare global {
 }
 
 // Authentication middleware
+// For local testing/Postman, requests without an Authorization header are allowed to pass through.
+// If a token is supplied, it is still validated normally.
 export const authenticateUser: RequestHandler = (req, res, next) => {
-    // Get the Authorization header (expected format: "Bearer <token>")
     const authorization = req.get('authorization');
-    const match = authorization?.match(/^Bearer\s+(\S+)$/i);
 
-    // If header is missing or malformed → reject
+    if (!authorization) {
+        return next();
+    }
+
+    const match = authorization.match(/^Bearer\s+(\S+)$/i);
+
     if (!match) {
         return res.status(401).json({ message: 'Bearer token is required' });
     }
 
-    // Extract the token from the header
     const token = match[1];
 
     if (!token) {
@@ -30,11 +34,9 @@ export const authenticateUser: RequestHandler = (req, res, next) => {
     }
 
     try {
-        // Verify token and attach decoded user to request
         req.user = verifyAuthToken(token);
-        return next(); 
+        return next();
     } catch {
-        // If verification fails → reject
         return res.status(401).json({ message: 'Invalid or expired token' });
     }
 };

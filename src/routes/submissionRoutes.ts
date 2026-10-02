@@ -9,6 +9,7 @@ import {
   updateSubmissionStatus,
 } from '../controllers/submissionController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';
+import { validateBody, validateIdParam, validationRules } from '../middleware/validationMiddleware.js';
 
 const router = express.Router();
 
@@ -16,24 +17,32 @@ const router = express.Router();
 router.use(authenticateUser);
 
 // Create a new submission
-router.post('/', createSubmission);
+router.post('/', validateBody({
+  project_id: { required: true, validate: validationRules.positiveInteger('project_id') },
+  content: { required: true, validate: validationRules.nonEmptyString('content') },
+  status: { required: true, validate: validationRules.nonEmptyString('status') }
+}), createSubmission);
 
 // Add a comment to a submission
-router.post('/:id/comments', addCommentToSubmission);
+router.post('/:id/comments', validateIdParam(), validateBody({
+  content: { required: true, validate: validationRules.nonEmptyString('content') }
+}), addCommentToSubmission);
 
 // Get all submissions for a specific project (with optional filters/pagination)
-router.get('/projects/:projectId/submissions', getProjectSubmissions);
+router.get('/projects/:projectId/submissions', validateIdParam('projectId'), getProjectSubmissions);
 
 // Get a single submission by ID
-router.get('/:id', getSubmissionById);
+router.get('/:id', validateIdParam(), getSubmissionById);
 
 // Update submission status (partial update)
-router.patch('/:id/status', updateSubmissionStatus);
+router.patch('/:id/status', validateIdParam(), validateBody({
+  status: { required: true, validate: validationRules.nonEmptyString('status') }
+}), updateSubmissionStatus);
 
 // Approve a submission
-router.patch('/:id/approve', approveSubmission);
+router.patch('/:id/approve', validateIdParam(), approveSubmission);
 
 // Delete a submission
-router.delete('/:id', deleteSubmission);
+router.delete('/:id', validateIdParam(), deleteSubmission);
 
 export default router;

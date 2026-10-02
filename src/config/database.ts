@@ -72,6 +72,25 @@ export const testDbConnection = async () => {
                     }
                 }
 
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS Projects (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        owner_id INTEGER NOT NULL REFERENCES Users(id)
+                    );
+                `);
+
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS ProjectMembers (
+                        project_id INTEGER NOT NULL REFERENCES Projects(id) ON DELETE CASCADE,
+                        user_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+                        role VARCHAR(50) DEFAULT 'Member',
+                        PRIMARY KEY (project_id, user_id)
+                    );
+                `);
+
                 client.release();
 
         }catch(error){

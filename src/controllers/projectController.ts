@@ -121,7 +121,7 @@ export const addProjectMember = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Failed to add member:', error);
         return res.status(500).json({ message: 'Failed to add member' });
-    }
+    } 
 };
 
 // Remove user from project
@@ -160,6 +160,7 @@ export const removeProjectMember = async (req: Request, res: Response) => {
 //Update the project section
 export const updateProject = async (req: Request, res: Response) => {
     try {
+        //creating the projectID variable 
         const projectId = parseId(req.params.projectId);
 
         if (projectId === null) {

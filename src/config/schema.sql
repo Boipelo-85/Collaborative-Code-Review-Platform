@@ -55,3 +55,14 @@ CREATE TABLE Comments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Notifications Table section
+CREATE TABLE Notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(id),
+    type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,           
+    read BOOLEAN DEFAULT FALSE,       
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+);
