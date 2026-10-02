@@ -7,7 +7,7 @@ const parseId = (value: unknown): number | null => {
     return Number.isInteger(id) && id > 0 ? id : null;
 };
 
-// Create a project (metadata + owner membership)
+// Create a project (owner membership)
 export const createProject = async (req: Request, res: Response) => {
     try {
         const { name, description } = req.body;

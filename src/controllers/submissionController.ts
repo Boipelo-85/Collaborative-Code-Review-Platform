@@ -147,6 +147,49 @@ export const updateSubmissionStatus = async (req: Request, res: Response) => {
     }
 };
 
+export const approveSubmission = async (req: Request, res: Response) => {
+    try {
+        const submissionId = parseId(req.params.id);
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication is required' });
+        }
+
+        if (submissionId === null) {
+            return res.status(400).json({ message: 'submissionId must be a positive integer' });
+        }
+
+        const submissionResult = await query(
+            'SELECT s.*, p.owner_id FROM submissions s JOIN Projects p ON p.id = s.project_id WHERE s.submission_id = $1',
+            [submissionId]
+        );
+
+        if (submissionResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Submission not found' });
+        }
+
+        const submission = submissionResult.rows[0];
+
+        if (req.user.role !== 'Admin' && req.user.id !== submission.owner_id) {
+            return res.status(403).json({ message: 'Only admins or the project owner can approve submissions' });
+        }
+
+        const updatedSubmission = await query(
+            'UPDATE submissions SET status = $1 WHERE submission_id = $2 RETURNING *',
+            ['approved', submissionId]
+        );
+
+        return res.status(200).json({
+            message: 'Submission approved successfully',
+            submission: updatedSubmission.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Failed to approve submission:', error);
+        return res.status(500).json({ message: 'Failed to approve submission' });
+    }
+};
+
 //Remove the submission section
 export const deleteSubmission = async (req: Request, res: Response) => {
 

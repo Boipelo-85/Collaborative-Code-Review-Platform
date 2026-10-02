@@ -1,6 +1,7 @@
 import express from 'express';
 import { addCommentToSubmission } from '../controllers/commentController.js';
 import {
+  approveSubmission,
   createSubmission,
   deleteSubmission,
   getSubmissionById,
@@ -28,6 +29,9 @@ router.get('/:id', getSubmissionById);
 
 // Update submission status (partial update)
 router.patch('/:id/status', updateSubmissionStatus);
+
+// Approve a submission
+router.patch('/:id/approve', approveSubmission);
 
 // Delete a submission
 router.delete('/:id', deleteSubmission);
