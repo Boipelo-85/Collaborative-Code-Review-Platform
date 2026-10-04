@@ -1,8 +1,8 @@
 import express from 'express';
+import { register } from '../controllers/authController.js';
 import {
 	deleteUserProfile,
 	getUserProfile,
-	register,
 	updateUserProfile
 } from '../controllers/userController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';
