@@ -39,9 +39,23 @@ CREATE TABLE ProjectMembers (
 
 CREATE TABLE submissions (
     submission_id SERIAL PRIMARY KEY,
-    project_id INTEGER NOT NULL,
+    project_id INTEGER NOT NULL REFERENCES Projects(id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES Users(id),
+    submitter_id INTEGER NOT NULL REFERENCES Users(id),
     content TEXT NOT NULL,
-    status VARCHAR(30) NOT NULL
+    status VARCHAR(30) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'in_review', 'approved', 'changes_requested')),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Reviews table section
+CREATE TABLE Reviews (
+    review_id SERIAL PRIMARY KEY,
+    submission_id INTEGER NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
+    reviewer_id INTEGER NOT NULL REFERENCES Users(id),
+    decision VARCHAR(30) NOT NULL CHECK (decision IN ('approved', 'changes_requested')),
+    comment TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Comments Table section
@@ -49,7 +63,7 @@ CREATE TABLE submissions (
 CREATE TABLE Comments (
     comment_id SERIAL PRIMARY KEY,
     submission_id INTEGER NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
-    author_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    author_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
     line_number INTEGER, -- optional: for inline comments on specific code lines
     content TEXT NOT NULL CHECK (char_length(trim(content)) > 0),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -59,10 +73,10 @@ CREATE TABLE Comments (
 -- Notifications Table section
 CREATE TABLE Notifications (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES Users(id),
+    user_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
     type VARCHAR(50) NOT NULL,
-    message TEXT NOT NULL,           
-    read BOOLEAN DEFAULT FALSE,       
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    message TEXT NOT NULL,
+    read BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     
 );

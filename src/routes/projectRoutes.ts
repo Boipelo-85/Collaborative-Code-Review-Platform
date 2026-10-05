@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProjectMember, createProject, deleteProject, getProjectById, getProjects, removeProjectMember, updateProject } from '../controllers/projectController.js';
+import { addProjectMember, createProject, deleteProject, getProjectById, getProjects, getProjectStats, removeProjectMember, updateProject } from '../controllers/projectController.js';
 import { getProjectSubmissions } from '../controllers/submissionController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';
 import { validateBody, validateIdParam, validationRules } from '../middleware/validationMiddleware.js';
@@ -24,6 +24,9 @@ router.get('/', getProjects);
 
 // Get all submissions for a project
 router.get('/:id/submissions', validateIdParam(), getProjectSubmissions);
+
+// Get project review and comment statistics
+router.get('/:id/stats', validateIdParam(), getProjectStats);
 
 // Get a project by ID
 router.get('/:projectId', validateIdParam('projectId'), getProjectById);

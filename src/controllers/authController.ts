@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import { query } from '../config/database.js';
 import { assertJwtSecretConfigured, createAuthToken } from '../services/authService.js';
 
-
+//Register tha user aunthentication
 export const register = async (req: Request, res: Response) => {
     try {
         assertJwtSecretConfigured();
@@ -78,7 +78,7 @@ export const register = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Registration failed' });
     }
 };
-
+//Login section and validate the logins
 export const login = async (req: Request, res: Response) => {
     try {
         assertJwtSecretConfigured();

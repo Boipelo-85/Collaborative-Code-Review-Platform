@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import type { PoolClient } from "pg";
 import dotenv from "dotenv";
 import type { StringMappingType } from "typescript/unstable/async";
 
@@ -10,6 +11,26 @@ const pool = new Pool({
 });
 
 export const query = (text: string ,params?: any[]) => pool.query( text ,params)
+
+export const withTransaction = async <T>(operation: (client: PoolClient) => Promise<T>): Promise<T> => {
+        const client = await pool.connect();
+
+        try {
+                await client.query('BEGIN');
+                const result = await operation(client);
+                await client.query('COMMIT');
+                return result;
+        } catch (error) {
+                try {
+                        await client.query('ROLLBACK');
+                } catch (rollbackError) {
+                        console.error('Failed to roll back database transaction:', rollbackError);
+                }
+                throw error;
+        } finally {
+                client.release();
+        }
+};
 
 //Creating the function to connect to the pool and try for connect and catch for errors
 export const testDbConnection = async () => {
@@ -91,6 +112,54 @@ export const testDbConnection = async () => {
                     );
                 `);
 
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS submissions (
+                        submission_id SERIAL PRIMARY KEY,
+                        project_id INTEGER NOT NULL REFERENCES Projects(id) ON DELETE CASCADE,
+                        author_id INTEGER NOT NULL REFERENCES Users(id),
+                        submitter_id INTEGER NOT NULL REFERENCES Users(id),
+                        content TEXT NOT NULL,
+                        status VARCHAR(30) NOT NULL DEFAULT 'pending'
+                            CHECK (status IN ('pending', 'in_review', 'approved', 'changes_requested')),
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );
+                `);
+
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS Reviews (
+                        review_id SERIAL PRIMARY KEY,
+                        submission_id INTEGER NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
+                        reviewer_id INTEGER NOT NULL REFERENCES Users(id),
+                        decision VARCHAR(30) NOT NULL
+                            CHECK (decision IN ('approved', 'changes_requested')),
+                        comment TEXT,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );
+                `);
+
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS Comments (
+                        comment_id SERIAL PRIMARY KEY,
+                        submission_id INTEGER NOT NULL REFERENCES submissions(submission_id) ON DELETE CASCADE,
+                        author_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+                        line_number INTEGER,
+                        content TEXT NOT NULL CHECK (char_length(trim(content)) > 0),
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );
+                `);
+
+                await client.query(`
+                    CREATE TABLE IF NOT EXISTS Notifications (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+                        type VARCHAR(50) NOT NULL,
+                        message TEXT NOT NULL,
+                        read BOOLEAN NOT NULL DEFAULT FALSE,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );
+                `);
+
                 client.release();
 
         }catch(error){
@@ -101,5 +170,3 @@ export const testDbConnection = async () => {
                 process.exit(1);
         }
 }
-
-

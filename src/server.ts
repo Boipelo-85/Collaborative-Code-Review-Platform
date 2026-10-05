@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'node:http';
 import dotenv from "dotenv";
 import { testDbConnection } from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
@@ -8,12 +9,15 @@ import repositoryRoutes from './routes/repositoryRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import submissionRoutes from './routes/submissionRoutes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
+import { attachWebSocketServer } from './services/webSocketService.js';
 
 dotenv.config();
 
 // Initialize the app and port section
 const app = express();
 const PORT = process.env.PORT || 5000;
+const server = createServer(app);
+attachWebSocketServer(server);
 
 // Middleware
 app.use(express.json());
@@ -40,8 +44,9 @@ app.use(errorHandler);
 const startServer = async () => {
     await testDbConnection();
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
+        console.log(`WebSocket notifications are available at ws://localhost:${PORT}/ws`);
     });
 };
 

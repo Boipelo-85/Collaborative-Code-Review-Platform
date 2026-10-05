@@ -85,6 +85,120 @@ export const getProjectById = async (req: Request, res: Response) => {
     }
 };
 
+export const getProjectStats = async (req: Request, res: Response) => {
+    const projectId = parseId(req.params.id);
+
+    if (projectId === null) {
+        return res.status(400).json({ message: 'projectId must be a positive integer' });
+    }
+
+    try {
+        const projectResult = await query(
+            'SELECT id FROM Projects WHERE id = $1',
+            [projectId]
+        );
+        if (projectResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        const result = await query(
+            `WITH project_submissions AS (
+                SELECT submission_id, created_at
+                FROM submissions
+                WHERE project_id = $1
+            ),
+            project_reviews AS (
+                SELECT r.review_id, r.submission_id, r.reviewer_id, r.decision, r.created_at
+                FROM Reviews r
+                JOIN project_submissions s ON s.submission_id = r.submission_id
+            ),
+            decision_totals AS (
+                SELECT
+                    COUNT(*) AS total,
+                    COUNT(*) FILTER (WHERE decision = 'approved') AS approved,
+                    COUNT(*) FILTER (WHERE decision = 'changes_requested') AS rejected
+                FROM project_reviews
+            ),
+            first_reviews AS (
+                SELECT submission_id, MIN(created_at) AS first_reviewed_at
+                FROM project_reviews
+                GROUP BY submission_id
+            ),
+            reviewer_activity AS (
+                SELECT
+                    r.reviewer_id,
+                    u.name AS reviewer_name,
+                    COUNT(*) AS review_count,
+                    COUNT(*) FILTER (WHERE r.decision = 'approved') AS approved_count,
+                    COUNT(*) FILTER (WHERE r.decision = 'changes_requested') AS rejected_count
+                FROM project_reviews r
+                JOIN Users u ON u.id = r.reviewer_id
+                GROUP BY r.reviewer_id, u.name
+            ),
+            comment_counts AS (
+                SELECT s.submission_id, COUNT(c.comment_id) AS comment_count
+                FROM project_submissions s
+                JOIN Comments c ON c.submission_id = s.submission_id
+                GROUP BY s.submission_id
+            )
+            SELECT
+                (SELECT COUNT(*) FROM project_submissions) AS submission_count,
+                (SELECT total FROM decision_totals) AS review_count,
+                (
+                    SELECT ROUND(
+                        AVG(EXTRACT(EPOCH FROM (f.first_reviewed_at - s.created_at)) / 3600)::numeric,
+                        2
+                    )
+                    FROM project_submissions s
+                    JOIN first_reviews f ON f.submission_id = s.submission_id
+                ) AS average_review_time_hours,
+                (SELECT approved FROM decision_totals) AS approved_count,
+                (SELECT rejected FROM decision_totals) AS rejected_count,
+                ROUND(
+                    100.0 * (SELECT approved FROM decision_totals)
+                    / NULLIF((SELECT total FROM decision_totals), 0),
+                    2
+                ) AS approved_percentage,
+                ROUND(
+                    100.0 * (SELECT rejected FROM decision_totals)
+                    / NULLIF((SELECT total FROM decision_totals), 0),
+                    2
+                ) AS rejected_percentage,
+                COALESCE(
+                    (
+                        SELECT jsonb_agg(
+                            jsonb_build_object(
+                                'reviewer_id', reviewer_id,
+                                'reviewer_name', reviewer_name,
+                                'review_count', review_count,
+                                'approved_count', approved_count,
+                                'rejected_count', rejected_count
+                            )
+                            ORDER BY review_count DESC, reviewer_id ASC
+                        )
+                        FROM reviewer_activity
+                    ),
+                    '[]'::jsonb
+                ) AS reviewer_activity,
+                (
+                    SELECT jsonb_build_object(
+                        'submission_id', submission_id,
+                        'comment_count', comment_count
+                    )
+                    FROM comment_counts
+                    ORDER BY comment_count DESC, submission_id ASC
+                    LIMIT 1
+                ) AS most_commented_submission`,
+            [projectId]
+        );
+
+        return res.status(200).json(result.rows[0]);
+    } catch (error) {
+        console.error('Failed to retrieve project stats:', error);
+        return res.status(500).json({ message: 'Failed to retrieve project stats' });
+    }
+};
+
 // Assign user to project
 export const addProjectMember = async (req: Request, res: Response) => {
     const projectId = parseId(req.params.id);

@@ -12,7 +12,6 @@ export interface Project {
 }
 // Input type for creating a project (request body)
 export interface CreateProjectInput{
-
         name : string;
         description : string;
 

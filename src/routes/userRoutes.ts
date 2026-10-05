@@ -3,10 +3,12 @@ import { register } from '../controllers/authController.js';
 import {
 	deleteUserProfile,
 	getUserProfile,
+	updateUserRole,
 	updateUserProfile
 } from '../controllers/userController.js';
-import { authenticateUser } from '../middleware/authMiddleware.js';
+import { authenticateUser, authorizeRoles } from '../middleware/authMiddleware.js';
 import { validateBody, validateIdParam, validationRules } from '../middleware/validationMiddleware.js';
+import notificationRoutes from './notificationRoutes.js';
 
 const router = express.Router();
 
@@ -21,6 +23,15 @@ router.post('/', validateBody({
 
 // Protect the user routes below
 router.use(authenticateUser);
+router.use('/:id/notifications', notificationRoutes);
+
+// Only admins can assign or revoke the Reviewer role.
+router.patch('/:id/role', authorizeRoles('Admin'), validateIdParam(), validateBody({
+	role: { required: true, validate: (value) =>
+		value === 'Reviewer' || value === 'Submitter'
+			? null
+			: 'role must be Reviewer or Submitter.' }
+}), updateUserRole);
 
 // Get a user's profile by ID
 router.get('/:id', validateIdParam(), getUserProfile);

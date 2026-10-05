@@ -1,11 +1,13 @@
 import express from 'express';
-import { addCommentToSubmission } from '../controllers/commentController.js';
+import { addCommentToSubmission, getSubmissionComments } from '../controllers/commentController.js';
 import {
   approveSubmission,
   createSubmission,
   deleteSubmission,
+  getSubmissionReviews,
   getSubmissionById,
   getProjectSubmissions,
+  requestSubmissionChanges,
   updateSubmissionStatus,
 } from '../controllers/submissionController.js';
 import { authenticateUser } from '../middleware/authMiddleware.js';
@@ -20,13 +22,14 @@ router.use(authenticateUser);
 router.post('/', validateBody({
   project_id: { required: true, validate: validationRules.positiveInteger('project_id') },
   content: { required: true, validate: validationRules.nonEmptyString('content') },
-  status: { required: true, validate: validationRules.nonEmptyString('status') }
+  status: { validate: validationRules.nonEmptyString('status') }
 }), createSubmission);
 
 // Add a comment to a submission
 router.post('/:id/comments', validateIdParam(), validateBody({
   content: { required: true, validate: validationRules.nonEmptyString('content') }
 }), addCommentToSubmission);
+router.get('/:id/comments', validateIdParam(), getSubmissionComments);
 
 // Get all submissions for a specific project (with optional filters/pagination)
 router.get('/projects/:projectId/submissions', validateIdParam('projectId'), getProjectSubmissions);
@@ -41,6 +44,10 @@ router.patch('/:id/status', validateIdParam(), validateBody({
 
 // Approve a submission
 router.patch('/:id/approve', validateIdParam(), approveSubmission);
+
+// Request changes and retrieve the review history
+router.patch('/:id/request-changes', validateIdParam(), requestSubmissionChanges);
+router.get('/:id/reviews', validateIdParam(), getSubmissionReviews);
 
 // Delete a submission
 router.delete('/:id', validateIdParam(), deleteSubmission);

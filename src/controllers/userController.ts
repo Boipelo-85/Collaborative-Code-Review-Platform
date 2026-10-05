@@ -49,6 +49,46 @@ export const getUserProfile = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Failed to retrieve user profile' });
     }
 };
+
+export const updateUserRole = async (req: Request, res: Response) => {
+    const userId = parseUserId(req.params.id);
+
+    if (userId === null) {
+        return res.status(400).json({ message: 'id must be a positive integer' });
+    }
+
+    if (!req.user) {
+        return res.status(401).json({ message: 'Authentication is required' });
+    }
+
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Only admins can assign user roles' });
+    }
+
+    const { role } = req.body as { role?: unknown };
+    if (role !== 'Reviewer' && role !== 'Submitter') {
+        return res.status(400).json({ message: 'role must be Reviewer or Submitter' });
+    }
+
+    try {
+        const result = await query(
+            'UPDATE Users SET role = $1 WHERE id = $2 RETURNING id, name, email, role',
+            [role, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json({
+            message: 'User role updated successfully. The user must log in again for the new role to take effect.',
+            user: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Failed to update user role:', error);
+        return res.status(500).json({ message: 'Failed to update user role' });
+    }
+};
 //Validates fields individually (name, email, display_picture, cellphone). Builds dynamic SQL update. Handles uniqueness errors. Requires auth and authorization.
 export const updateUserProfile = async (req: Request, res: Response) => {
     const userId = parseUserId(req.params.id);
