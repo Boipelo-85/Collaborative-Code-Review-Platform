@@ -1,13 +1,11 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { query } from '../config/database.js';
-import { assertJwtSecretConfigured, createAuthToken } from '../services/authService.js';
+import { createAuthToken } from '../services/authService.js';
 
 //Register tha user aunthentication
 export const register = async (req: Request, res: Response) => {
     try {
-        assertJwtSecretConfigured();
-
         const body = req.body as Record<string, unknown> | null;
 
         if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -62,12 +60,7 @@ export const register = async (req: Request, res: Response) => {
 
         return res.status(201).json({
             message: 'User registered successfully',
-            user,
-            token: createAuthToken({
-                id: user.id,
-                email: user.email,
-                role: user.role
-            })
+            user
         });
     } catch (error) {
         if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
@@ -81,8 +74,6 @@ export const register = async (req: Request, res: Response) => {
 //Login section and validate the logins
 export const login = async (req: Request, res: Response) => {
     try {
-        assertJwtSecretConfigured();
-
         const body = req.body as Record<string, unknown> | null;
 
         if (!body || typeof body !== 'object' || Array.isArray(body)) {

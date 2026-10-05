@@ -57,7 +57,7 @@ export const testDbConnection = async () => {
                             name VARCHAR(100) NOT NULL,
                             email VARCHAR(255) UNIQUE NOT NULL,
                             display_picture TEXT,
-                            cellphone INT,
+                            cellphone BIGINT,
                             password VARCHAR(255),
                             role VARCHAR(20) NOT NULL DEFAULT 'Submitter'
                         );
@@ -90,6 +90,21 @@ export const testDbConnection = async () => {
                             ALTER TABLE Users ALTER COLUMN password TYPE VARCHAR(255);
                         `);
                         console.log("Password column updated successfully");
+                    }
+
+                    // Check if cellphone column needs to be updated to BIGINT
+                    const cellphoneTypeCheck = await client.query(`
+                        SELECT data_type
+                        FROM information_schema.columns
+                        WHERE table_name = 'users' AND column_name = 'cellphone';
+                    `);
+
+                    if (cellphoneTypeCheck.rows.length > 0 && cellphoneTypeCheck.rows[0].data_type === 'integer') {
+                        console.log("Updating cellphone column to BIGINT...");
+                        await client.query(`
+                            ALTER TABLE Users ALTER COLUMN cellphone TYPE BIGINT;
+                        `);
+                        console.log("Cellphone column updated to BIGINT successfully");
                     }
                 }
 
