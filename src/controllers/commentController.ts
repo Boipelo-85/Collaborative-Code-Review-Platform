@@ -9,8 +9,11 @@ const parseId = (value: unknown): number | null => {
     return Number.isInteger(id) && id > 0 ? id : null;
 };
 
-const canComment = (role: string): boolean =>
+const canViewComments = (role: string): boolean =>
     role === 'Submitter' || role === 'Reviewer' || role === 'Admin';
+
+const canAddComment = (role: string): boolean =>
+    role === 'Reviewer' || role === 'Admin';
 
 //Creating the comment to the submission section
 export const getSubmissionComments = async (req: Request, res: Response) => {
@@ -19,7 +22,7 @@ export const getSubmissionComments = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Authentication is required' });
         }
 
-        if (!canComment(req.user.role)) {
+        if (!canViewComments(req.user.role)) {
             return res.status(403).json({ message: 'Your role is not allowed to view comments' });
         }
 
@@ -59,8 +62,8 @@ export const addCommentToSubmission = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'Authentication is required' });
         }
 
-        if (!canComment(req.user.role)) {
-            return res.status(403).json({ message: 'Your role is not allowed to add comments' });
+        if (!canAddComment(req.user.role)) {
+            return res.status(403).json({ message: 'Only Reviewers and Admins can add comments' });
         }
 
         const submissionId = parseId(req.params.id);
@@ -143,6 +146,10 @@ export const updateComment = async (req: Request, res: Response) => {
             return res.status(404).json({ message: 'Comment not found' });
         }
 
+        if (!canAddComment(req.user.role)) {
+            return res.status(403).json({ message: 'Only Reviewers and Admins can update comments' });
+        }
+
         if (existingComment.rows[0].author_id !== req.user.id && req.user.role !== 'Admin') {
             return res.status(403).json({ message: 'You can only update your own comments' });
         }
@@ -182,6 +189,10 @@ export const deleteComment = async (req: Request, res: Response) => {
 
         if (existingComment.rows.length === 0) {
             return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        if (!canAddComment(req.user.role)) {
+            return res.status(403).json({ message: 'Only Reviewers and Admins can delete comments' });
         }
 
         if (existingComment.rows[0].author_id !== req.user.id && req.user.role !== 'Admin') {

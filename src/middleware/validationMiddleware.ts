@@ -91,6 +91,10 @@ export const validationRules = {
 	integerOrNull: (field: string): FieldValidator => (value) =>
 		value === null || (typeof value === 'number' && Number.isInteger(value))
 			? null
-			: `${field} must be an integer or null.`
+			: `${field} must be an integer or null.`,
+	role: (value: unknown): string | null =>
+		typeof value === 'string' && ['Submitter', 'Reviewer'].includes(value.trim())
+			? null
+			: 'role must be either "Submitter" or "Reviewer".'
 };
 

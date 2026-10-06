@@ -25,6 +25,7 @@ export const register = async (req: Request, res: Response) => {
             : typeof body.cellphone === 'number' && Number.isInteger(body.cellphone)
                 ? body.cellphone
                 : undefined;
+        const role = typeof body.role === 'string' ? body.role.trim() : 'Submitter';
 
         if (!name || !email || !password || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({
@@ -34,7 +35,7 @@ export const register = async (req: Request, res: Response) => {
 
         if (displayPicture === undefined || cellphone === undefined) {
             return res.status(400).json({
-                message: 'display_picture must be text and cellphone must be an integer'
+                message: 'display_picture must be text or null and cellphone must be an integer or null'
             });
         }
 
@@ -51,9 +52,9 @@ export const register = async (req: Request, res: Response) => {
 
         const result = await query(
             `INSERT INTO Users (name, email, display_picture, cellphone, password, role)
-             VALUES ($1, $2, $3, $4, $5, 'Submitter')
+             VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id, name, email, display_picture, cellphone, role`,
-            [name, email, displayPicture, cellphone, hashedPassword]
+            [name, email, displayPicture, cellphone, hashedPassword, role]
         );
 
         const user = result.rows[0];

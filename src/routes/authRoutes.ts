@@ -10,7 +10,8 @@ router.post('/register', validateBody({
 	email: { required: true, validate: validationRules.email },
 	password: { required: true, validate: validationRules.nonEmptyString('password') },
 	display_picture: { validate: validationRules.nullableString('display_picture') },
-	cellphone: { validate: validationRules.integerOrNull('cellphone') }
+	cellphone: { validate: validationRules.integerOrNull('cellphone') },
+	role: { validate: validationRules.role }
 }), register);
 router.post('/login', validateBody({
 	email: { required: true, validate: validationRules.email },
